@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import struct
 import sys
 import shlex
 
-from isa import Opcode, OpcodeParam, OpcodeParamType, OpcodeType, TermType, opcode_types
+from isa import Opcode, OpcodeParam, OpcodeParamType, OpcodeType, TermType, convert_to_binary
 
 
 class Term:
@@ -353,35 +352,6 @@ def terms_to_opcodes(terms: list[Term]) -> list[Opcode]:
     opcodes = list(map(term_to_opcodes, terms))
     opcodes = fix_addresses_in_opcodes(opcodes)
     return [*opcodes, Opcode(OpcodeType.HALT, [])]
-
-
-def get_bin_args(opcode: Opcode) -> tuple[bytes, str]:
-    if len(opcode.params) == 0:
-        return struct.pack(">l", 0), format(0, "06x")
-
-    arg = int(opcode.params[0].value)
-    return struct.pack(">l", arg), f"{arg:04x}"
-
-
-def convert_to_binary(opcodes: list[Opcode]) -> tuple[list[bytes], list[str]]:
-    bin_code: list[bytes] = []
-    debug_code: list[str] = []
-
-    for index, opcode in enumerate(opcodes):
-        debug_line = ""
-
-        operation = opcode.opcode_type
-
-        idx = opcode_types.index(operation)
-        bin_code.append(struct.pack("H", idx))
-        debug_line += format(index, "05") + " - " + format(idx, "02x")
-
-        args_bytes, args_format = get_bin_args(opcode)
-        bin_code.append(args_bytes)
-        debug_line += args_format
-        debug_code.append(debug_line + " - " + opcode.__str__() + "\n")
-
-    return bin_code, debug_code
 
 
 def translate(source_code: str) -> tuple[list[bytes], list[str]]:
